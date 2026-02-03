@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiFetch, friendlyErrorMessage } from "../../lib/api";
+import { usePathname, useRouter } from "next/navigation";
+import { apiFetch, friendlyErrorMessage, isAuthError } from "../../lib/api";
 import Avatar from "../../components/Avatar";
 
 type Conversation = {
@@ -29,13 +30,21 @@ export default function ChatInboxPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const router = useRouter();
+  const pathname = usePathname() || "/chats";
 
   useEffect(() => {
     apiFetch<{ conversations: Conversation[] }>("/messages/inbox")
       .then((r) => setConversations(r.conversations))
-      .catch((e: any) => setError(friendlyErrorMessage(e) || "No se pudo cargar los mensajes"))
+      .catch((e: any) => {
+        if (isAuthError(e)) {
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          return;
+        }
+        setError(friendlyErrorMessage(e) || "No se pudo cargar los mensajes");
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [pathname, router]);
 
   if (loading) return <div className="text-white/70">Cargando mensajes...</div>;
   if (error) return <div className="card p-6 border-red-500/30 bg-red-500/10 text-red-100">{error}</div>;

@@ -97,7 +97,7 @@ authRouter.post("/logout", asyncHandler(async (req, res) => {
 }));
 
 authRouter.get("/me", asyncHandler(async (req, res) => {
-  if (!req.session.userId) return res.json({ user: null });
+  if (!req.session.userId) return res.status(401).json({ error: "UNAUTHENTICATED" });
   const user = await prisma.user.findUnique({
     where: { id: req.session.userId },
     select: {
