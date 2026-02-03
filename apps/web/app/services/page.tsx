@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { apiFetch, resolveMediaUrl } from "../../lib/api";
+import { usePathname, useRouter } from "next/navigation";
+import { apiFetch, isAuthError, resolveMediaUrl } from "../../lib/api";
 
 type Service = {
   id: string;
@@ -21,13 +22,21 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname() || "/servicios";
 
   useEffect(() => {
     apiFetch<{ services: Service[] }>("/services/active")
       .then((res) => setServices(res.services))
-      .catch((err: any) => setError(err?.message || "No se pudo cargar servicios"))
+      .catch((err: any) => {
+        if (isAuthError(err)) {
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          return;
+        }
+        setError(err?.message || "No se pudo cargar servicios");
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [pathname, router]);
 
   if (loading) return <div className="text-white/60">Cargando servicios...</div>;
   if (error) return <div className="card p-6 text-red-200 border-red-500/30 bg-red-500/10">{error}</div>;
