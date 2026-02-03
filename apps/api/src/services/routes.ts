@@ -236,3 +236,88 @@ servicesRouter.post("/services/:userId/rating", requireAuth, asyncHandler(async 
   });
   return res.json({ rating: created });
 }));
+
+servicesRouter.post("/services/request", requireAuth, asyncHandler(async (req, res) => {
+  const professionalId = typeof req.body?.professionalId === "string" ? req.body.professionalId : null;
+  if (!professionalId) return res.status(400).json({ error: "INVALID_PROFESSIONAL" });
+
+  const request = await prisma.serviceRequest.create({
+    data: {
+      clientId: req.session.userId!,
+      professionalId,
+      status: "PENDIENTE_APROBACION"
+    }
+  });
+  return res.json({ request });
+}));
+
+servicesRouter.get("/services/active", requireAuth, asyncHandler(async (req, res) => {
+  const services = await prisma.serviceRequest.findMany({
+    where: {
+      clientId: req.session.userId!,
+      status: { not: "FINALIZADO" }
+    },
+    include: {
+      professional: {
+        select: {
+          id: true,
+          displayName: true,
+          username: true,
+          avatarUrl: true,
+          category: true,
+          isActive: true
+        }
+      }
+    },
+    orderBy: { createdAt: "desc" }
+  });
+  return res.json({
+    services: services.map((s) => ({
+      id: s.id,
+      status: s.status,
+      createdAt: s.createdAt,
+      professional: {
+        id: s.professional.id,
+        name: s.professional.displayName || s.professional.username,
+        avatarUrl: s.professional.avatarUrl,
+        category: s.professional.category?.name || null,
+        isActive: s.professional.isActive
+      }
+    }))
+  });
+}));
+
+servicesRouter.post("/services/:id/approve", requireAuth, asyncHandler(async (req, res) => {
+  const updated = await prisma.serviceRequest.update({
+    where: { id: req.params.id },
+    data: { status: "ACTIVO" }
+  });
+  return res.json({ service: updated });
+}));
+
+servicesRouter.post("/services/:id/finish", requireAuth, asyncHandler(async (req, res) => {
+  const updated = await prisma.serviceRequest.update({
+    where: { id: req.params.id },
+    data: { status: "PENDIENTE_EVALUACION" }
+  });
+  return res.json({ service: updated });
+}));
+
+servicesRouter.post("/services/:id/review", requireAuth, asyncHandler(async (req, res) => {
+  const hearts = Number(req.body?.hearts);
+  if (!Number.isFinite(hearts) || hearts < 1 || hearts > 5) {
+    return res.status(400).json({ error: "INVALID_RATING" });
+  }
+  const review = await prisma.professionalReview.create({
+    data: {
+      serviceRequestId: req.params.id,
+      hearts,
+      comment: typeof req.body?.comment === "string" ? req.body.comment : null
+    }
+  });
+  await prisma.serviceRequest.update({
+    where: { id: req.params.id },
+    data: { status: "FINALIZADO" }
+  });
+  return res.json({ review });
+}));

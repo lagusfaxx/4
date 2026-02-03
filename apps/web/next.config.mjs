@@ -8,8 +8,6 @@ const nextConfig = {
       { source: "/feed", destination: "/inicio", permanent: true },
       { source: "/videos", destination: "/reels", permanent: true },
       { source: "/services", destination: "/servicios", permanent: true },
-      { source: "/chat", destination: "/chats", permanent: true },
-      { source: "/chat/:path*", destination: "/chats/:path*", permanent: true },
       { source: "/profile/:path*", destination: "/perfil/:path*", permanent: true }
     ];
   },
