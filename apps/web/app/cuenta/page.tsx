@@ -16,7 +16,9 @@ export default function AccountPage() {
         <div className="mt-2 text-lg font-semibold">
           {me?.user?.displayName || me?.user?.username || "Invitado"}
         </div>
-        <div className="text-xs text-white/50">{me?.user?.email || "Inicia sesión para ver más"}</div>
+        <div className="text-xs text-white/50">
+          {me?.user?.profileType || "Inicia sesión para ver más"}
+        </div>
       </div>
     </div>
   );
