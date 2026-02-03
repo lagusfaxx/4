@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { apiFetch } from "../lib/api";
+import { apiFetch, isAuthError } from "../lib/api";
 import { Briefcase, HeartHandshake, Sparkles, Store, Users } from "lucide-react";
 
 type Category = {
@@ -19,7 +19,13 @@ export default function HomePage() {
   useEffect(() => {
     apiFetch<{ categories: Category[] }>("/categories")
       .then((res) => setCategories(res.categories))
-      .catch((err: any) => setError(err?.message || "No se pudieron cargar las categorías."))
+      .catch((err: any) => {
+        if (isAuthError(err)) {
+          setError("No se pudieron cargar las categorías.");
+          return;
+        }
+        setError(err?.message || "No se pudieron cargar las categorías.");
+      })
       .finally(() => setLoading(false));
   }, []);
 

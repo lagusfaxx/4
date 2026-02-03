@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { apiFetch, API_URL, resolveMediaUrl } from "../../../lib/api";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { apiFetch, API_URL, isAuthError, resolveMediaUrl } from "../../../lib/api";
 
 type Message = {
   id: string;
@@ -27,6 +27,8 @@ type MeResponse = {
 
 export default function ChatPage() {
   const params = useParams();
+  const router = useRouter();
+  const pathname = usePathname() || "/chats";
   const userId = String(params.userId || "");
   const [me, setMe] = useState<MeResponse["user"] | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -42,10 +44,6 @@ export default function ChatPage() {
       apiFetch<MeResponse>("/auth/me"),
       apiFetch<{ messages: Message[]; other: ChatUser }>(`/messages/${userId}`)
     ]);
-    if (!meResp.user) {
-      window.location.href = "/login";
-      return;
-    }
     setMe(meResp.user);
     setMessages(msgResp.messages);
     setOther(msgResp.other);
@@ -54,6 +52,10 @@ export default function ChatPage() {
   useEffect(() => {
     load()
       .catch((e: any) => {
+        if (isAuthError(e)) {
+          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          return;
+        }
         if (e?.status === 403) {
           setError("No puedes iniciar chat con este perfil. Suscríbete o espera a que habilite mensajes.");
         } else {
@@ -61,7 +63,7 @@ export default function ChatPage() {
         }
       })
       .finally(() => setLoading(false));
-  }, [userId]);
+  }, [pathname, router, userId]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();

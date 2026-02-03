@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { apiFetch } from "../lib/api";
+import { useRouter, useSearchParams } from "next/navigation";
+import { apiFetch, friendlyErrorMessage } from "../lib/api";
 
 type Mode = "login" | "register";
 
 export default function AuthForm({ mode }: { mode: Mode }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -47,9 +50,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           body: JSON.stringify({ email, password })
         });
       }
-      window.location.href = "/dashboard";
+      const next = searchParams.get("next");
+      router.replace(next || "/");
     } catch (err: any) {
-      setError(err?.message || "Error");
+      setError(friendlyErrorMessage(err) || "Error");
     } finally {
       setLoading(false);
     }
