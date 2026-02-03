@@ -5,10 +5,12 @@
   "scripts": {
     "generate": "node scripts/validate-schema.js && prisma generate",
     "migrate:dev": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy"
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "node seed.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "argon2": "^0.31.2"
   },
   "devDependencies": {
     "prisma": "^5.22.0"

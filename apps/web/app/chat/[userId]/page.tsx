@@ -35,6 +35,7 @@ export default function ChatPage() {
   const [attachment, setAttachment] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [requesting, setRequesting] = useState(false);
 
   async function load() {
     const [meResp, msgResp] = await Promise.all([
@@ -95,13 +96,28 @@ export default function ChatPage() {
     }
   }
 
+  async function requestService() {
+    setRequesting(true);
+    try {
+      await apiFetch("/services/request", {
+        method: "POST",
+        body: JSON.stringify({ professionalId: userId })
+      });
+    } catch (e: any) {
+      setError(e?.message || "No se pudo solicitar el servicio");
+    } finally {
+      setRequesting(false);
+    }
+  }
+
   if (loading) return <div className="text-white/70">Cargando chat...</div>;
   if (error) return <div className="text-red-200">{error}</div>;
 
   return (
     <div className="grid gap-6">
       <div className="card p-6">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-white/10 border border-white/10 overflow-hidden">
             {other?.avatarUrl ? (
               <img
@@ -122,6 +138,10 @@ export default function ChatPage() {
               <p className="text-xs text-white/60">Conversación segura para coordinar.</p>
             )}
           </div>
+          </div>
+          <button onClick={requestService} className="btn-primary" disabled={requesting}>
+            {requesting ? "Solicitando..." : "Solicitar servicio"}
+          </button>
         </div>
       </div>
 

@@ -67,7 +67,7 @@ export default function ChatInboxPage() {
             return (
               <Link
                 key={c.other.id}
-                href={`/chats/${c.other.id}`}
+                href={`/chat/${c.other.id}`}
                 className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 hover:border-white/30 transition"
               >
                 <div className="flex items-center gap-3">

@@ -25,6 +25,7 @@ import { billingRouter } from "./billing/routes";
 import { notificationsRouter } from "./notifications/routes";
 import { KhipuError } from "./khipu/client";
 import { statsRouter } from "./stats/routes";
+import { clientRouter } from "./client/routes";
 import { prisma } from "./db";
 
 const app = express();
@@ -160,6 +161,7 @@ app.use("/", creatorRouter);
 app.use("/", billingRouter);
 app.use("/", notificationsRouter);
 app.use("/", statsRouter);
+app.use("/", clientRouter);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   const requestId = (_req as any).requestId;

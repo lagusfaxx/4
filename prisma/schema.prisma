@@ -19,6 +19,24 @@ enum ProfileType {
   SHOP
 }
 
+enum CategoryKind {
+  PROFESSIONAL
+  ESTABLISHMENT
+}
+
+enum ProfessionalTier {
+  PREMIUM
+  GOLD
+  SILVER
+}
+
+enum ServiceRequestStatus {
+  PENDIENTE_APROBACION
+  ACTIVO
+  PENDIENTE_EVALUACION
+  FINALIZADO
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -83,6 +101,11 @@ model User {
   city                String?
   latitude            Float?
   longitude           Float?
+  categoryId          String?           @db.Uuid
+  isActive            Boolean           @default(true)
+  tier                ProfessionalTier?
+  isOnline            Boolean           @default(false)
+  lastSeen            DateTime?
   avatarUrl           String?
   coverUrl            String?
   bio                 String?
@@ -111,6 +134,11 @@ model User {
   receivedRatings          ServiceRating[]       @relation("ProfileRatings")
   givenRatings             ServiceRating[]       @relation("GivenRatings")
   notifications            Notification[]
+  category                 Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  favorites                Favorite[]            @relation("FavoritesByUser")
+  favoritedBy              Favorite[]            @relation("FavoritesForProfessional")
+  clientRequests           ServiceRequest[]      @relation("ClientRequests")
+  professionalRequests     ServiceRequest[]      @relation("ProfessionalRequests")
 }
 
 model Post {
@@ -268,4 +296,77 @@ model ServiceRating {
   rater   User @relation("GivenRatings", fields: [raterId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, raterId])
+}
+
+model Category {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  kind           CategoryKind
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  professionals  User[]
+  establishments Establishment[]
+}
+
+model Establishment {
+  id          String               @id @default(uuid()) @db.Uuid
+  categoryId  String               @db.Uuid
+  name        String
+  city        String
+  address     String
+  phone       String
+  description String?
+  latitude    Float?
+  longitude   Float?
+  galleryUrls String[]             @default([])
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  category Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  reviews  EstablishmentReview[]
+}
+
+model Favorite {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  professionalId String   @db.Uuid
+  createdAt      DateTime @default(now())
+
+  user         User @relation("FavoritesByUser", fields: [userId], references: [id], onDelete: Cascade)
+  professional User @relation("FavoritesForProfessional", fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, professionalId])
+}
+
+model ServiceRequest {
+  id             String               @id @default(uuid()) @db.Uuid
+  clientId       String               @db.Uuid
+  professionalId String               @db.Uuid
+  status         ServiceRequestStatus @default(PENDIENTE_APROBACION)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  client       User               @relation("ClientRequests", fields: [clientId], references: [id], onDelete: Cascade)
+  professional User               @relation("ProfessionalRequests", fields: [professionalId], references: [id], onDelete: Cascade)
+  review       ProfessionalReview?
+}
+
+model ProfessionalReview {
+  id               String   @id @default(uuid()) @db.Uuid
+  serviceRequestId String   @unique @db.Uuid
+  hearts           Int
+  comment          String?
+  createdAt        DateTime @default(now())
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+}
+
+model EstablishmentReview {
+  id              String   @id @default(uuid()) @db.Uuid
+  establishmentId String   @db.Uuid
+  stars           Int
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
 }

@@ -1,5 +1,5 @@
-import FeedClient from "../feed/FeedClient";
+import { redirect } from "next/navigation";
 
 export default function InicioPage() {
-  return <FeedClient />;
+  redirect("/");
 }
